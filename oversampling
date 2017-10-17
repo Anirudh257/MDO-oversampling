@@ -1,0 +1,152 @@
+data=read.csv("balance.csv")
+data=data.matrix(data)
+S=data
+nmaj=576
+t=1
+ui=vector("numeric",length=4)
+SNew=matrix("numeric",ncol=5)
+m=576
+mi=49
+#for(i in 1:t) 
+#{
+	sort= data[sort.list(data[,5]), ]
+	Sm=sort[1:49,]
+	Scm=choosesamples(sort,Sm)
+	w=Scm[,6]
+	Scm=Scm[,-6]	
+	ni=nrow(Scm)
+	ui=colMeans(Scm[,-5])
+	Zi=Scm[,-5]	
+	for(h in 1:ni)
+	{Zi[h,]=Zi[h,]-ui}
+	F=Pca(Zi)
+	T=F[1:(nrow(F)-4),]
+	Eigenvectors=F[(nrow(F)-3):nrow(F),]
+	V=diag(cov(T))		
+	Orate=nmaj-ni
+	Stemp=MDO(T,V,Orate,w)
+	invev=solve(Eigenvectors)
+	Stempo=Stemp%*%invev
+	Stom=NULL
+	for(l in 1:ncol(Stempo))
+	{
+	  mean=Stempo[,l]+ui[l]
+	  Stom=cbind(Stom,mean)
+	
+	}
+	
+	cl=rep(1,length.out=nrow())
+	Stoma=cbind(Stom,cl)
+	Snew=rbind(Snew,Stoma)
+#}
+
+/////////////////////////////////////////////////
+
+choosesamples<-function(S,Sm)
+{
+#sort= data[sort.list(data[,5]),]
+#Sm=sort[1:49,]
+Scm=matrix(,ncol=5)
+weights=vector()
+temp=vector(length=10)
+dist=matrix(nrow=m,ncol=3)
+count=vector()
+check=matrix(nrow=49,ncol=10)
+for(j in 1:mi)
+{
+	xjc=Sm[j,]
+	xj=Sm[j,-5]
+	for(k in 1:m)
+	{
+		xk=S[k,-5]
+		dist[k,1]=k	
+		dist[k,2]=dist(rbind(xj,xk))
+		dist[k,3]=S[k,5]
+	}
+	
+	s= dist[sort.list(dist[,2]), ]
+	
+	temp=s[1:10,1]
+	
+	for(g in 1:10)
+	{	q=temp[g]
+		check[j,g]=S[q,5]	
+	}
+	
+	num=0
+	for(l in 1:10)
+	{
+		c=temp[l]
+		if(S[c,5]==Sm[1,5])
+		{num=num+1}	
+	}
+	
+	count=c(count,num)
+	
+	if(num>=3)
+	{
+	Scm=rbind(Scm,xjc)
+	weights=c(weights,num/10)
+	}
+	
+	
+	
+}
+Scm=Scm[-1,]
+w=weights/sum(weights)
+rS=cbind(Scm,w)
+return(rS)
+}
+
+\\\\\\\\\\\\\\\\\\\\\\\\\\MDO
+MDO<-function(T,V,Orate,weights)
+{
+numa=4
+Stemp=matrix()
+while(Orate!=0)
+{
+	x=runif(1,0,1)
+	l=1	
+	s=weights[l]	
+	while(x>s)
+	{
+		l=l+1
+		s=s+weights[l]		
+	}
+	xnew=T[l]
+	X=xnew^2
+	
+	alpha=sum(X/V)
+	alphaV=alpha*V	
+	s=0
+	for(j in 1:(numa-1))
+	{
+		d=-1*sqrt(alphaV[j])
+		d=c(d,sqrt(alphaV[j]))
+		r=sample(d,1)
+		s=s+((r^2)/alphaV[j])
+
+	}
+	temp=X/V
+	temp=temp[1:(numa-1)]
+  lastfeaval=sqrt(V[numa]*(alpha-sum(temp)))
+  d2=-1*lastfeaval
+  d2=c(d2,lastfeaval)
+  xnew[numa]=sample(d2,1)
+  Stemp=rbind(Stemp,xnew)
+}
+return(Stemp)
+}
+
+/////////////////////////PCA
+
+Pca<-funtion(data,eps=1)
+{
+  cov=cov(data)
+  eval=eigen(cov)$values
+  evec=eigen(cov)$vectors
+  rzmd=data 
+  fd=rzmd%*%evec
+  fdev=rbind(fd,evec)
+  return(fdev)
+}
